@@ -1,6 +1,7 @@
 package core;
 
 import entities.*;
+import handler.commandHandler.CommandHandler;
 import handler.inlineHandler.*;
 import handler.messageHandler.SendMessageCallbackHandler;
 import handler.messageHandler.SendMessageUpdateHandler;
@@ -211,244 +212,252 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         if (update.hasCallbackQuery()) {
             if (update.getCallbackQuery().getData() != null) {
-                SendMessageCallbackHandler sendMessageCallbackHandler = new SendMessageCallbackHandler(chatId, listIdMessage);
-
-                switch (update.getCallbackQuery().getData()) {
-                    case "Info BTC":
-                        try {
-                            InlineBTCHandler inlineBTCHandler = new InlineBTCHandler(chatId, user, listIdMessage);
-                            execute(inlineBTCHandler.sendInlineBTC(update.getCallbackQuery()));
-                        } catch (TelegramApiException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case "Macchine Noleggiate":
-                        if(!listRent.isEmpty()) {
-                            for (Rent r : listRent) {
-                                try {
-                                    execute(sendMessageCallbackHandler.forwardMessage("Queste sono le tue macchine noleggiate!", update.getCallbackQuery()));
-                                    execute(sendMessageCallbackHandler.forwardMessage(r.toString(), update.getCallbackQuery()));
-                                } catch (TelegramApiException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        } else {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Non hai macchine noleggiate!", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        break;
-                    case "Swaggy":
-                        try {
-                            sendPhoto_callbackQuery(chatId, "src/main/imgs/swaggy.JPG", "", update.getCallbackQuery());
-                            InlineSwaggyHandler inlineSwaggyHandler = new InlineSwaggyHandler(chatId, user, listIdMessage);
-                            execute(inlineSwaggyHandler.sendInlineSwaggy(update.getCallbackQuery()));
-                        } catch (TelegramApiException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case "Indirizzo Wallet":
-                        try {
-                            execute(sendMessageCallbackHandler.forwardMessage("Questo è il tuo indirizzo wallet: '" + indirizzoWallet_SWAGGY + "'", update.getCallbackQuery()));
-                        } catch (TelegramApiException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case "Saldi Wallet":
-                        try {
-                            InlineWalletHandler inlineWalletHandler = new InlineWalletHandler(chatId, user, listIdMessage);
-                            execute(inlineWalletHandler.sendInlineWallet(update.getCallbackQuery()));
-                        } catch (TelegramApiException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case "Saldi Account":
-                        try {
-                            InlineAccountHandler inlineAccountHandler = new InlineAccountHandler(chatId, user, listIdMessage);
-                            execute(inlineAccountHandler.sendInlineAccount(update.getCallbackQuery()));
-                        } catch (TelegramApiException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case "Sentyment":
-//                        Sentyment sentyment = sentymentRestClient.retriveSentymentById(userId);
-//                        sentyment_STATUS = sentyment.getStatus();
-//                        if(sentyment_STATUS.equals("NEGATIVO")) {
-                            try {
-                                sendPhoto_callbackQuery(chatId, "src/main/imgs/sentyment.png", "", update.getCallbackQuery());
-                                InlineSentymentHandler inlineSentymentHandler = new InlineSentymentHandler(chatId, user, listIdMessage);
-                                //sendInlineSentyment(chatId, update.getCallbackQuery());
-                                execute(inlineSentymentHandler.sendInlineSentyment(update.getCallbackQuery()));
-                            } catch (TelegramApiException | NullPointerException e) {
-                                e.printStackTrace();
-                            }
-//                        } else {
-//                            sendMessage_callbackQuery(chatId, "Il servizio Sentyment è ATTIVO", update.getCallbackQuery());
-//                        }
-                        break;
-                    case "EUR":
-                        Currency currency_EUR = currencyRestClient.retriveCurrencyBySymbol("BTC", "EUR");
-                        try {
-                            execute(sendMessageCallbackHandler.forwardMessage("Valore del BTC: " + currency_EUR.getRate() + " €", update.getCallbackQuery()));
-                        } catch (TelegramApiException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case "USD":
-                        Currency currency_USD = currencyRestClient.retriveCurrencyBySymbol("BTC", "USD");
-                        try {
-                            execute(sendMessageCallbackHandler.forwardMessage("Valore del BTC: " + currency_USD.getRate() + " $", update.getCallbackQuery()));
-                        } catch (TelegramApiException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case "OMNIBUS":
-                        List<Account> account_OMNIBUS = accountRestClient.retriveAccountById(userId, "OMNIBUS");
-                        if (!account_OMNIBUS.isEmpty()) {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Saldo OMNIBUS: " + account_OMNIBUS.get(0).getBalance() + " €", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account BALANCE!", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        break;
-                    case "STANDARD":
-                        List<Account> account_STANDARD = accountRestClient.retriveAccountById(userId, "STANDARD");
-                        if (!account_STANDARD.isEmpty()) {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Saldo STANDARD: " + account_STANDARD.get(0).getBalance() + " €", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account STANDARD!", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        break;
-                    case "SAVING":
-                        List<Account> account_SAVING = accountRestClient.retriveAccountById(userId, "SAVING");
-                        if (!account_SAVING.isEmpty()) {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Saldo SAVING: " + account_SAVING.get(0).getBalance() + " €", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account SAVING!", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        break;
-                    case "SWAGGY_CARD":
-                        List<Account> account_SWAGGY_CARD = accountRestClient.retriveAccountById(userId, "SWAGGY_CARD");
-                        if (!account_SWAGGY_CARD.isEmpty()) {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Saldo SWAGGY_CARD: " + account_SWAGGY_CARD.get(0).getBalance() + " €", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account SWAGGY_CARD!", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        break;
-                    case "EMONEY_CARD":
-                        List<Account> account_EMONEY_CARD = accountRestClient.retriveAccountById(userId, "EMONEY_CARD");
-                        if (!account_EMONEY_CARD.isEmpty()) {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Saldo EMONEY_CARD: " + account_EMONEY_CARD.get(0).getBalance() + " €", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account EMONEY_CARD!", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        break;
-                    case "EMONEY_CARD_VIP":
-                        List<Account> account_EMONEY_CARD_VIP = accountRestClient.retriveAccountById(userId, "EMONEY_CARD_VIP");
-                        if (!account_EMONEY_CARD_VIP.isEmpty()) {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Saldo EMONEY_CARD_VIP: " + account_EMONEY_CARD_VIP.get(0).getBalance() + " €", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account EMONEY_CARD_VIP!", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        break;
-                    case "SWAGGY_WALLET":
-                        List<Wallet> wallet_SWAGGY = walletRestClient.retriveWalletById(userId, "SWAGGY");
-                        if (!wallet_SWAGGY.isEmpty()) {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Saldo wallet SWAGGY: " + wallet_SWAGGY.get(0).getBalance() + " BTC", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un wallet SWAGGY!", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        break;
-                    case "SWAGGY_SAVING":
-                        List<Wallet> wallet_SAVING = walletRestClient.retriveWalletById(userId, "SWAGGY_SAVING");
-                        if (!wallet_SAVING.isEmpty()) {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Saldo wallet SWAGGY_SAVING: " + wallet_SAVING.get(0).getBalance() + " BTC", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un wallet SWAGGY_SAVING!", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        break;
-                    case "BETCHA":
-                        List<Wallet> wallet_BETCHA = walletRestClient.retriveWalletById(userId, "BETCHA");
-                        if (!wallet_BETCHA.isEmpty()) {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Saldo wallet BETCHA: " + wallet_BETCHA.get(0).getBalance() + "BTC", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            try {
-                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un wallet BETCHA!", update.getCallbackQuery()));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        break;
+                CommandHandler commandHandler = new CommandHandler(update.getCallbackQuery().getData(),listIdMessage);
+                for(SendMessage message : commandHandler.executeCommand(update.getCallbackQuery(), listRent, userId)) {
+                    try {
+                        execute(message);
+                    } catch (TelegramApiException e) {
+                        e.printStackTrace();
+                    }
                 }
+//                SendMessageCallbackHandler sendMessageCallbackHandler = new SendMessageCallbackHandler(chatId, listIdMessage);
+//
+//                switch (update.getCallbackQuery().getData()) {
+//                    case "Info BTC":
+//                        try {
+//                            InlineBTCHandler inlineBTCHandler = new InlineBTCHandler(chatId, user, listIdMessage);
+//                            execute(inlineBTCHandler.sendInlineBTC(update.getCallbackQuery()));
+//                        } catch (TelegramApiException e) {
+//                            e.printStackTrace();
+//                        }
+//                        break;
+//                    case "Macchine Noleggiate":
+//                        if(!listRent.isEmpty()) {
+//                            for (Rent r : listRent) {
+//                                try {
+//                                    execute(sendMessageCallbackHandler.forwardMessage("Queste sono le tue macchine noleggiate!", update.getCallbackQuery()));
+//                                    execute(sendMessageCallbackHandler.forwardMessage(r.toString(), update.getCallbackQuery()));
+//                                } catch (TelegramApiException e) {
+//                                    e.printStackTrace();
+//                                }
+//                            }
+//                        } else {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Non hai macchine noleggiate!", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                        break;
+//                    case "Swaggy":
+//                        try {
+//                            sendPhoto_callbackQuery(chatId, "src/main/imgs/swaggy.JPG", "", update.getCallbackQuery());
+//                            InlineSwaggyHandler inlineSwaggyHandler = new InlineSwaggyHandler(chatId, user, listIdMessage);
+//                            execute(inlineSwaggyHandler.sendInlineSwaggy(update.getCallbackQuery()));
+//                        } catch (TelegramApiException e) {
+//                            e.printStackTrace();
+//                        }
+//                        break;
+//                    case "Indirizzo Wallet":
+//                        try {
+//                            execute(sendMessageCallbackHandler.forwardMessage("Questo è il tuo indirizzo wallet: '" + indirizzoWallet_SWAGGY + "'", update.getCallbackQuery()));
+//                        } catch (TelegramApiException e) {
+//                            e.printStackTrace();
+//                        }
+//                        break;
+//                    case "Saldi Wallet":
+//                        try {
+//                            InlineWalletHandler inlineWalletHandler = new InlineWalletHandler(chatId, user, listIdMessage);
+//                            execute(inlineWalletHandler.sendInlineWallet(update.getCallbackQuery()));
+//                        } catch (TelegramApiException e) {
+//                            e.printStackTrace();
+//                        }
+//                        break;
+//                    case "Saldi Account":
+//                        try {
+//                            InlineAccountHandler inlineAccountHandler = new InlineAccountHandler(chatId, user, listIdMessage);
+//                            execute(inlineAccountHandler.sendInlineAccount(update.getCallbackQuery()));
+//                        } catch (TelegramApiException e) {
+//                            e.printStackTrace();
+//                        }
+//                        break;
+//                    case "Sentyment":
+////                        Sentyment sentyment = sentymentRestClient.retriveSentymentById(userId);
+////                        sentyment_STATUS = sentyment.getStatus();
+////                        if(sentyment_STATUS.equals("NEGATIVO")) {
+//                            try {
+//                                sendPhoto_callbackQuery(chatId, "src/main/imgs/sentyment.png", "", update.getCallbackQuery());
+//                                InlineSentymentHandler inlineSentymentHandler = new InlineSentymentHandler(chatId, user, listIdMessage);
+//                                //sendInlineSentyment(chatId, update.getCallbackQuery());
+//                                execute(inlineSentymentHandler.sendInlineSentyment(update.getCallbackQuery()));
+//                            } catch (TelegramApiException | NullPointerException e) {
+//                                e.printStackTrace();
+//                            }
+////                        } else {
+////                            sendMessage_callbackQuery(chatId, "Il servizio Sentyment è ATTIVO", update.getCallbackQuery());
+////                        }
+//                        break;
+//                    case "EUR":
+//                        Currency currency_EUR = currencyRestClient.retriveCurrencyBySymbol("BTC", "EUR");
+//                        try {
+//                            execute(sendMessageCallbackHandler.forwardMessage("Valore del BTC: " + currency_EUR.getRate() + " €", update.getCallbackQuery()));
+//                        } catch (TelegramApiException e) {
+//                            e.printStackTrace();
+//                        }
+//                        break;
+//                    case "USD":
+//                        Currency currency_USD = currencyRestClient.retriveCurrencyBySymbol("BTC", "USD");
+//                        try {
+//                            execute(sendMessageCallbackHandler.forwardMessage("Valore del BTC: " + currency_USD.getRate() + " $", update.getCallbackQuery()));
+//                        } catch (TelegramApiException e) {
+//                            e.printStackTrace();
+//                        }
+//                        break;
+//                    case "OMNIBUS":
+//                        List<Account> account_OMNIBUS = accountRestClient.retriveAccountById(userId, "OMNIBUS");
+//                        if (!account_OMNIBUS.isEmpty()) {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Saldo OMNIBUS: " + account_OMNIBUS.get(0).getBalance() + " €", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        } else {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account BALANCE!", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                        break;
+//                    case "STANDARD":
+//                        List<Account> account_STANDARD = accountRestClient.retriveAccountById(userId, "STANDARD");
+//                        if (!account_STANDARD.isEmpty()) {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Saldo STANDARD: " + account_STANDARD.get(0).getBalance() + " €", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        } else {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account STANDARD!", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                        break;
+//                    case "SAVING":
+//                        List<Account> account_SAVING = accountRestClient.retriveAccountById(userId, "SAVING");
+//                        if (!account_SAVING.isEmpty()) {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Saldo SAVING: " + account_SAVING.get(0).getBalance() + " €", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        } else {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account SAVING!", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                        break;
+//                    case "SWAGGY_CARD":
+//                        List<Account> account_SWAGGY_CARD = accountRestClient.retriveAccountById(userId, "SWAGGY_CARD");
+//                        if (!account_SWAGGY_CARD.isEmpty()) {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Saldo SWAGGY_CARD: " + account_SWAGGY_CARD.get(0).getBalance() + " €", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        } else {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account SWAGGY_CARD!", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                        break;
+//                    case "EMONEY_CARD":
+//                        List<Account> account_EMONEY_CARD = accountRestClient.retriveAccountById(userId, "EMONEY_CARD");
+//                        if (!account_EMONEY_CARD.isEmpty()) {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Saldo EMONEY_CARD: " + account_EMONEY_CARD.get(0).getBalance() + " €", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        } else {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account EMONEY_CARD!", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                        break;
+//                    case "EMONEY_CARD_VIP":
+//                        List<Account> account_EMONEY_CARD_VIP = accountRestClient.retriveAccountById(userId, "EMONEY_CARD_VIP");
+//                        if (!account_EMONEY_CARD_VIP.isEmpty()) {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Saldo EMONEY_CARD_VIP: " + account_EMONEY_CARD_VIP.get(0).getBalance() + " €", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        } else {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account EMONEY_CARD_VIP!", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                        break;
+//                    case "SWAGGY_WALLET":
+//                        List<Wallet> wallet_SWAGGY = walletRestClient.retriveWalletById(userId, "SWAGGY");
+//                        if (!wallet_SWAGGY.isEmpty()) {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Saldo wallet SWAGGY: " + wallet_SWAGGY.get(0).getBalance() + " BTC", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        } else {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un wallet SWAGGY!", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                        break;
+//                    case "SWAGGY_SAVING":
+//                        List<Wallet> wallet_SAVING = walletRestClient.retriveWalletById(userId, "SWAGGY_SAVING");
+//                        if (!wallet_SAVING.isEmpty()) {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Saldo wallet SWAGGY_SAVING: " + wallet_SAVING.get(0).getBalance() + " BTC", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        } else {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un wallet SWAGGY_SAVING!", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                        break;
+//                    case "BETCHA":
+//                        List<Wallet> wallet_BETCHA = walletRestClient.retriveWalletById(userId, "BETCHA");
+//                        if (!wallet_BETCHA.isEmpty()) {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Saldo wallet BETCHA: " + wallet_BETCHA.get(0).getBalance() + "BTC", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        } else {
+//                            try {
+//                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un wallet BETCHA!", update.getCallbackQuery()));
+//                            } catch (TelegramApiException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                        break;
+//                }
             }
         } else if (!update.hasCallbackQuery()) {
             if (update.hasMessage()) {
