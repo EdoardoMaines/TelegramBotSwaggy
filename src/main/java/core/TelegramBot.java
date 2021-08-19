@@ -1,14 +1,10 @@
 package core;
 
 import entities.*;
+import handler.inlineHandler.*;
+import handler.messageHandler.SendMessageCallbackHandler;
+import handler.messageHandler.SendMessageUpdateHandler;
 import lombok.NoArgsConstructor;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.json.JSONObject;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
@@ -21,7 +17,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiValidationException;
 import entities.User;
-import reactor.core.publisher.Mono;
 import restClients.*;
 import org.springframework.web.reactive.function.client.*;
 
@@ -59,8 +54,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     List<Rent> listRent = new ArrayList<>();
 
-    static List<Integer> listIdMessage = new ArrayList<>();
-    static List<Integer> listIdPhoto = new ArrayList<>();
+    public static List<Integer> listIdMessage = new ArrayList<>();
+    public static List<Integer> listIdPhoto = new ArrayList<>();
 
 
     public long chatId;
@@ -129,6 +124,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (update.getMessage().hasText()) {
                 user = update.getMessage().getFrom().getUserName();
                 chatId = update.getMessage().getChatId();
+                SendMessageUpdateHandler sendMessageUpdateHandler = new SendMessageUpdateHandler(chatId, listIdMessage);
 
                 if (update.getMessage().getText().equals("/start")){
                     listIdMessage.add(update.getMessage().getMessageId());
@@ -137,18 +133,22 @@ public class TelegramBot extends TelegramLongPollingBot {
 //                    for (JSONObject j : jsonObject) {
 //                        System.out.print(j.toString());
 //                    }
-                    JSONObject jsonObject = userRestClient.retriveAtheByJson();
-                    System.out.print(jsonObject);
+//                    JSONObject jsonObject = userRestClient.retriveAtheByJson();
+//                    System.out.print(jsonObject);
                     try {
                         sendPhoto_update(update.getMessage().getChatId(), "src/main/imgs/swag.jpg", "", update);
                     } catch (TelegramApiValidationException e) {
                         e.printStackTrace();
                     }
-                    sendMessage_update(chatId,"Ciao " + user + "!\n" +
-                            "Per accedere ai tuoi dati abbiamo bisogno della tua email e della tua password di Swaggy." + "\n" +
-                            "Invia un messaggio contenente SOLO la tua email e la tua password separate da '/'" + "\n" +
-                            "Esempio:", update);
-                    sendMessage_update(chatId,"'email'/'password'", update);
+                    try {
+                        execute(sendMessageUpdateHandler.forwardMessage("Ciao " + user + "!\n" +
+                                "Per accedere ai tuoi dati abbiamo bisogno della tua email e della tua password di Swaggy." + "\n" +
+                                "Invia un messaggio contenente SOLO la tua email e la tua password separate da '/'" + "\n" +
+                                "Esempio:", update));
+                        execute(sendMessageUpdateHandler.forwardMessage("'email'/'password'", update));
+                    } catch (TelegramApiException e) {
+                        e.printStackTrace();
+                    }
                 }
                 if (checkCommands(update.getMessage().getText()) && checkInput(update.getMessage().getText())) {
                     String input [] = update.getMessage().getText().split("/");
@@ -165,26 +165,36 @@ public class TelegramBot extends TelegramLongPollingBot {
                         indirizzoWallet_SWAGGY = listWallet.get(0).getAddress();
 
                         if (checkCommands(update.getMessage().getText()) && checkPassword(password, user)) {
-                            sendMessage_update(chatId, "Ciao! L'email (" + user.getEmail() + ") e la password (" + user.getPassword() + ") che hai inserito sono corrette", update);
-
                             try {
                                 System.out.print(passwordCritto);
-                                execute(sendInlineGlobal(chatId, update));
+                                InlineHandler inlineHandler = new InlineHandler(chatId, user.toString(), listIdMessage);
+                                execute(inlineHandler.sendInline(update));
                             } catch (TelegramApiException e) {
                                 e.printStackTrace();
                             }
                         } else {
-                            sendMessage_update(chatId, "Ops! La password che hai inserito è scorretta.", update);
+                            try {
+                                execute(sendMessageUpdateHandler.forwardMessage("Ops! La password che hai inserito è scorretta.", update));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         }
                     } catch (WebClientResponseException e) {
                         e.printStackTrace();
-                        sendMessage_update(chatId, "L'email che hai inserito non è corretta!", update);
+                        try {
+                            execute(sendMessageUpdateHandler.forwardMessage("L'email che hai inserito non è corretta!", update));
+                        } catch (TelegramApiException telegramApiException) {
+                            telegramApiException.printStackTrace();
+                        }
                     }
                 }
                 if (checkCommands(update.getMessage().getText()) && !checkInput(update.getMessage().getText())) {
                     listIdMessage.add(update.getMessage().getMessageId());
-                    sendMessage_update(chatId, "Ops! Il messaggio che hai inviato o la password non sono corretti", update);
-                    //deleteMessage(2000, update);
+                    try {
+                        execute(sendMessageUpdateHandler.forwardMessage("Ops! Il messaggio che hai inviato o la password non sono corretti", update));
+                    } catch (TelegramApiException e) {
+                        e.printStackTrace();
+                    }
                 }
                 if (update.getMessage().getText().equals("/stop")){
                     //listIdMessage.add(update.getMessage().getMessageId());
@@ -201,11 +211,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         if (update.hasCallbackQuery()) {
             if (update.getCallbackQuery().getData() != null) {
+                SendMessageCallbackHandler sendMessageCallbackHandler = new SendMessageCallbackHandler(chatId, listIdMessage);
 
                 switch (update.getCallbackQuery().getData()) {
                     case "Info BTC":
                         try {
-                            execute(sendInlineBTC(chatId, update.getCallbackQuery()));
+                            InlineBTCHandler inlineBTCHandler = new InlineBTCHandler(chatId, user, listIdMessage);
+                            execute(inlineBTCHandler.sendInlineBTC(update.getCallbackQuery()));
                         } catch (TelegramApiException e) {
                             e.printStackTrace();
                         }
@@ -213,34 +225,49 @@ public class TelegramBot extends TelegramLongPollingBot {
                     case "Macchine Noleggiate":
                         if(!listRent.isEmpty()) {
                             for (Rent r : listRent) {
-                                sendMessage_callbackQuery(chatId, "Queste sono le tue macchine noleggiate!", update.getCallbackQuery());
-                                sendMessage_callbackQuery(chatId, r.toString(), update.getCallbackQuery());
+                                try {
+                                    execute(sendMessageCallbackHandler.forwardMessage("Queste sono le tue macchine noleggiate!", update.getCallbackQuery()));
+                                    execute(sendMessageCallbackHandler.forwardMessage(r.toString(), update.getCallbackQuery()));
+                                } catch (TelegramApiException e) {
+                                    e.printStackTrace();
+                                }
                             }
                         } else {
-                            sendMessage_callbackQuery(chatId, "Non hai macchine noleggiate!", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Non hai macchine noleggiate!", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                     case "Swaggy":
                         try {
                             sendPhoto_callbackQuery(chatId, "src/main/imgs/swaggy.JPG", "", update.getCallbackQuery());
-                            execute(sendInlineSwaggy(chatId, update.getCallbackQuery()));
+                            InlineSwaggyHandler inlineSwaggyHandler = new InlineSwaggyHandler(chatId, user, listIdMessage);
+                            execute(inlineSwaggyHandler.sendInlineSwaggy(update.getCallbackQuery()));
                         } catch (TelegramApiException e) {
                             e.printStackTrace();
                         }
                         break;
                     case "Indirizzo Wallet":
-                        sendMessage_callbackQuery(chatId, "Questo è il tuo indirizzo wallet: '" + indirizzoWallet_SWAGGY + "'", update.getCallbackQuery());
+                        try {
+                            execute(sendMessageCallbackHandler.forwardMessage("Questo è il tuo indirizzo wallet: '" + indirizzoWallet_SWAGGY + "'", update.getCallbackQuery()));
+                        } catch (TelegramApiException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case "Saldi Wallet":
                         try {
-                            execute(sendInlineWallet(chatId, update.getCallbackQuery()));
+                            InlineWalletHandler inlineWalletHandler = new InlineWalletHandler(chatId, user, listIdMessage);
+                            execute(inlineWalletHandler.sendInlineWallet(update.getCallbackQuery()));
                         } catch (TelegramApiException e) {
                             e.printStackTrace();
                         }
                         break;
                     case "Saldi Account":
                         try {
-                            execute(sendInlineAccount(chatId, update.getCallbackQuery()));
+                            InlineAccountHandler inlineAccountHandler = new InlineAccountHandler(chatId, user, listIdMessage);
+                            execute(inlineAccountHandler.sendInlineAccount(update.getCallbackQuery()));
                         } catch (TelegramApiException e) {
                             e.printStackTrace();
                         }
@@ -251,8 +278,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 //                        if(sentyment_STATUS.equals("NEGATIVO")) {
                             try {
                                 sendPhoto_callbackQuery(chatId, "src/main/imgs/sentyment.png", "", update.getCallbackQuery());
-                                sendInlineSentyment(chatId, update.getCallbackQuery());
-                            } catch (TelegramApiValidationException | NullPointerException e) {
+                                InlineSentymentHandler inlineSentymentHandler = new InlineSentymentHandler(chatId, user, listIdMessage);
+                                //sendInlineSentyment(chatId, update.getCallbackQuery());
+                                execute(inlineSentymentHandler.sendInlineSentyment(update.getCallbackQuery()));
+                            } catch (TelegramApiException | NullPointerException e) {
                                 e.printStackTrace();
                             }
 //                        } else {
@@ -261,82 +290,162 @@ public class TelegramBot extends TelegramLongPollingBot {
                         break;
                     case "EUR":
                         Currency currency_EUR = currencyRestClient.retriveCurrencyBySymbol("BTC", "EUR");
-                        sendMessage_callbackQuery(chatId, "Valore del BTC: " + currency_EUR.getRate() + " €", update.getCallbackQuery());
+                        try {
+                            execute(sendMessageCallbackHandler.forwardMessage("Valore del BTC: " + currency_EUR.getRate() + " €", update.getCallbackQuery()));
+                        } catch (TelegramApiException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case "USD":
                         Currency currency_USD = currencyRestClient.retriveCurrencyBySymbol("BTC", "USD");
-                        sendMessage_callbackQuery(chatId, "Valore del BTC: " + currency_USD.getRate() + " $", update.getCallbackQuery());
+                        try {
+                            execute(sendMessageCallbackHandler.forwardMessage("Valore del BTC: " + currency_USD.getRate() + " $", update.getCallbackQuery()));
+                        } catch (TelegramApiException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case "OMNIBUS":
                         List<Account> account_OMNIBUS = accountRestClient.retriveAccountById(userId, "OMNIBUS");
                         if (!account_OMNIBUS.isEmpty()) {
-                            sendMessage_callbackQuery(chatId, "Saldo OMNIBUS: " + account_OMNIBUS.get(0).getBalance() + " €", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Saldo OMNIBUS: " + account_OMNIBUS.get(0).getBalance() + " €", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         } else {
-                            sendMessage_callbackQuery(chatId, "Non hai un account BALANCE!", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account BALANCE!", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                     case "STANDARD":
                         List<Account> account_STANDARD = accountRestClient.retriveAccountById(userId, "STANDARD");
                         if (!account_STANDARD.isEmpty()) {
-                            sendMessage_callbackQuery(chatId, "Saldo STANDARD: " + account_STANDARD.get(0).getBalance() + " €", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Saldo STANDARD: " + account_STANDARD.get(0).getBalance() + " €", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         } else {
-                            sendMessage_callbackQuery(chatId, "Non hai un account STANDARD!", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account STANDARD!", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                     case "SAVING":
                         List<Account> account_SAVING = accountRestClient.retriveAccountById(userId, "SAVING");
                         if (!account_SAVING.isEmpty()) {
-                            sendMessage_callbackQuery(chatId, "Saldo SAVING: " + account_SAVING.get(0).getBalance() + " €", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Saldo SAVING: " + account_SAVING.get(0).getBalance() + " €", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         } else {
-                            sendMessage_callbackQuery(chatId, "Non hai un account SAVING!", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account SAVING!", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                     case "SWAGGY_CARD":
                         List<Account> account_SWAGGY_CARD = accountRestClient.retriveAccountById(userId, "SWAGGY_CARD");
                         if (!account_SWAGGY_CARD.isEmpty()) {
-                            sendMessage_callbackQuery(chatId, "Saldo SWAGGY_CARD: " + account_SWAGGY_CARD.get(0).getBalance() + " €", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Saldo SWAGGY_CARD: " + account_SWAGGY_CARD.get(0).getBalance() + " €", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         } else {
-                            sendMessage_callbackQuery(chatId, "Non hai un account SWAGGY_CARD!", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account SWAGGY_CARD!", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                     case "EMONEY_CARD":
                         List<Account> account_EMONEY_CARD = accountRestClient.retriveAccountById(userId, "EMONEY_CARD");
                         if (!account_EMONEY_CARD.isEmpty()) {
-                            sendMessage_callbackQuery(chatId, "Saldo EMONEY_CARD: " + account_EMONEY_CARD.get(0).getBalance() + " €", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Saldo EMONEY_CARD: " + account_EMONEY_CARD.get(0).getBalance() + " €", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         } else {
-                            sendMessage_callbackQuery(chatId, "Non hai un account EMONEY_CARD!", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account EMONEY_CARD!", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                     case "EMONEY_CARD_VIP":
                         List<Account> account_EMONEY_CARD_VIP = accountRestClient.retriveAccountById(userId, "EMONEY_CARD_VIP");
                         if (!account_EMONEY_CARD_VIP.isEmpty()) {
-                            sendMessage_callbackQuery(chatId, "Saldo EMONEY_CARD_VIP: " + account_EMONEY_CARD_VIP.get(0).getBalance() + " €", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Saldo EMONEY_CARD_VIP: " + account_EMONEY_CARD_VIP.get(0).getBalance() + " €", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         } else {
-                            sendMessage_callbackQuery(chatId, "Non hai un account EMONEY_CARD_VIP!", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un account EMONEY_CARD_VIP!", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                     case "SWAGGY_WALLET":
                         List<Wallet> wallet_SWAGGY = walletRestClient.retriveWalletById(userId, "SWAGGY");
                         if (!wallet_SWAGGY.isEmpty()) {
-                            sendMessage_callbackQuery(chatId, "Saldo wallet SWAGGY: " + wallet_SWAGGY.get(0).getBalance() + " BTC", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Saldo wallet SWAGGY: " + wallet_SWAGGY.get(0).getBalance() + " BTC", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         } else {
-                            sendMessage_callbackQuery(chatId, "Non hai un wallet SWAGGY!", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un wallet SWAGGY!", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                     case "SWAGGY_SAVING":
                         List<Wallet> wallet_SAVING = walletRestClient.retriveWalletById(userId, "SWAGGY_SAVING");
                         if (!wallet_SAVING.isEmpty()) {
-                            sendMessage_callbackQuery(chatId, "Saldo wallet SWAGGY_SAVING: " + wallet_SAVING.get(0).getBalance() + " BTC", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Saldo wallet SWAGGY_SAVING: " + wallet_SAVING.get(0).getBalance() + " BTC", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         } else {
-                            sendMessage_callbackQuery(chatId, "Non hai un wallet SWAGGY_SAVING!", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un wallet SWAGGY_SAVING!", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                     case "BETCHA":
                         List<Wallet> wallet_BETCHA = walletRestClient.retriveWalletById(userId, "BETCHA");
                         if (!wallet_BETCHA.isEmpty()) {
-                            sendMessage_callbackQuery(chatId, "Saldo wallet BETCHA: " + wallet_BETCHA.get(0).getBalance() + "BTC", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Saldo wallet BETCHA: " + wallet_BETCHA.get(0).getBalance() + "BTC", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         } else {
-                            sendMessage_callbackQuery(chatId, "Non hai un wallet BETCHA!", update.getCallbackQuery());
+                            try {
+                                execute(sendMessageCallbackHandler.forwardMessage("Non hai un wallet BETCHA!", update.getCallbackQuery()));
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                 }
@@ -361,224 +470,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 //        answer.setCacheTime(1);
 //        execute(answer);
 //    }
-    public static SendMessage sendInlineGlobal (long chatId, Update update){
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
-        InlineKeyboardButton inlineKeyboardButton2 = new InlineKeyboardButton();
-        InlineKeyboardButton inlineKeyboardButton3 = new InlineKeyboardButton();
-
-        inlineKeyboardButton1.setText("Info BTC");
-        inlineKeyboardButton1.setCallbackData("Info BTC");
-        inlineKeyboardButton2.setText("Macchine Noleggiate");
-        inlineKeyboardButton2.setCallbackData("Macchine Noleggiate");
-        inlineKeyboardButton3.setText("Swaggy");
-        inlineKeyboardButton3.setCallbackData("Swaggy");
-
-        List<InlineKeyboardButton> rowList = new ArrayList<>();
-        rowList.add(inlineKeyboardButton1);
-        rowList.add(inlineKeyboardButton2);
-        rowList.add(inlineKeyboardButton3);
-
-        inlineKeyboardMarkup.setKeyboard(Collections.singletonList(rowList));
-
-        SendMessage message = new SendMessage();
-        message.setText("Ciao " + user + "! Seleziona cosa di cui hai bisogno.");
-        message.setChatId(String.valueOf(chatId));
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        listIdMessage.add(update.getMessage().getMessageId());
-
-        return message;
-    }
-    public static SendMessage sendInlineAccount (long chatId, CallbackQuery callbackQuery) {
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
-        InlineKeyboardButton inlineKeyboardButton2 = new InlineKeyboardButton();
-        InlineKeyboardButton inlineKeyboardButton3 = new InlineKeyboardButton();
-        InlineKeyboardButton inlineKeyboardButton4 = new InlineKeyboardButton();
-        InlineKeyboardButton inlineKeyboardButton5 = new InlineKeyboardButton();
-        InlineKeyboardButton inlineKeyboardButton6 = new InlineKeyboardButton();
-
-        inlineKeyboardButton1.setText("OMNIBUS");
-        inlineKeyboardButton1.setCallbackData("OMNIBUS");
-        inlineKeyboardButton2.setText("STANDARD");
-        inlineKeyboardButton2.setCallbackData("STANDARD");
-        inlineKeyboardButton3.setText("SAVING");
-        inlineKeyboardButton3.setCallbackData("SAVING");
-        inlineKeyboardButton4.setText("SWAGGY_CARD");
-        inlineKeyboardButton4.setCallbackData("SWAGGY_CARD");
-        inlineKeyboardButton5.setText("EMONEY_CARD");
-        inlineKeyboardButton5.setCallbackData("EMONEY_CARD");
-        inlineKeyboardButton6.setText("EMONEY_CARD_VIP");
-        inlineKeyboardButton6.setCallbackData("EMONEY_CARD_VIP");
-
-        List<InlineKeyboardButton> rowList = new ArrayList<>();
-        rowList.add(inlineKeyboardButton1);
-        rowList.add(inlineKeyboardButton2);
-        rowList.add(inlineKeyboardButton3);
-        rowList.add(inlineKeyboardButton4);
-        rowList.add(inlineKeyboardButton5);
-        rowList.add(inlineKeyboardButton6);
-
-        inlineKeyboardMarkup.setKeyboard(Collections.singletonList(rowList));
-
-        SendMessage message = new SendMessage();
-        message.setText("Ciao " + user + "! Seleziona cosa di cui hai bisogno.");
-        message.setChatId(String.valueOf(chatId));
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        listIdMessage.add(callbackQuery.getMessage().getMessageId());
-
-        return message;
-    }
-    public static SendMessage sendInlineWallet (long chatId, CallbackQuery callbackQuery) {
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
-        InlineKeyboardButton inlineKeyboardButton2 = new InlineKeyboardButton();
-        InlineKeyboardButton inlineKeyboardButton3 = new InlineKeyboardButton();
-
-        inlineKeyboardButton1.setText("SWAGGY");
-        inlineKeyboardButton1.setCallbackData("SWAGGY_WALLET");
-        inlineKeyboardButton2.setText("SWAGGY_SAVING");
-        inlineKeyboardButton2.setCallbackData("SWAGGY_SAVING");
-        inlineKeyboardButton3.setText("BETCHA");
-        inlineKeyboardButton3.setCallbackData("BETCHA");
-
-
-        List<InlineKeyboardButton> rowList = new ArrayList<>();
-        rowList.add(inlineKeyboardButton1);
-        rowList.add(inlineKeyboardButton2);
-        rowList.add(inlineKeyboardButton3);
-
-        inlineKeyboardMarkup.setKeyboard(Collections.singletonList(rowList));
-
-        SendMessage message = new SendMessage();
-        message.setText("Ciao " + user + "! Seleziona cosa di cui hai bisogno.");
-        message.setChatId(String.valueOf(chatId));
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        listIdMessage.add(callbackQuery.getMessage().getMessageId());
-
-        return message;
-    }
-    public static SendMessage sendInlineBTC (long chatId, CallbackQuery callbackQuery){
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
-        InlineKeyboardButton inlineKeyboardButton2 = new InlineKeyboardButton();
-
-        inlineKeyboardButton1.setText("Valore[€]");
-        inlineKeyboardButton1.setCallbackData("EUR");
-        inlineKeyboardButton2.setText("Valore[$]");
-        inlineKeyboardButton2.setCallbackData("USD");
-
-        List<InlineKeyboardButton> rowList = new ArrayList<>();
-        rowList.add(inlineKeyboardButton1);
-        rowList.add(inlineKeyboardButton2);
-
-        inlineKeyboardMarkup.setKeyboard(Collections.singletonList(rowList));
-
-        SendMessage message = new SendMessage();
-        message.setText("Valore in tempo reale del BTC nelle seguenti valute:");
-        message.setChatId(String.valueOf(chatId));
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        listIdMessage.add(callbackQuery.getMessage().getMessageId());
-
-        return message;
-    }
-    public static SendMessage sendInlineSwaggy (long chatId, CallbackQuery callbackQuery){
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
-        InlineKeyboardButton inlineKeyboardButton2 = new InlineKeyboardButton();
-        InlineKeyboardButton inlineKeyboardButton3 = new InlineKeyboardButton();
-        InlineKeyboardButton inlineKeyboardButton4 = new InlineKeyboardButton();
-
-        inlineKeyboardButton1.setText("Indirizzo Wallet");
-        inlineKeyboardButton1.setCallbackData("Indirizzo Wallet");
-        inlineKeyboardButton2.setText("Saldi Wallet");
-        inlineKeyboardButton2.setCallbackData("Saldi Wallet");
-        inlineKeyboardButton3.setText("Saldi Account");
-        inlineKeyboardButton3.setCallbackData("Saldi Account");
-        inlineKeyboardButton4.setText("Sentyment");
-        inlineKeyboardButton4.setCallbackData("Sentyment");
-
-        List<InlineKeyboardButton> rowList = new ArrayList<>();
-        rowList.add(inlineKeyboardButton1);
-        rowList.add(inlineKeyboardButton2);
-        rowList.add(inlineKeyboardButton3);
-        rowList.add(inlineKeyboardButton4);
-
-        inlineKeyboardMarkup.setKeyboard(Collections.singletonList(rowList));
-
-        SendMessage message = new SendMessage();
-        message.setText("Tramite questi bottoni protrai visualizzare le informazioni riguardanti:");
-        message.setChatId(String.valueOf(chatId));
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        listIdMessage.add(callbackQuery.getMessage().getMessageId());
-
-        return message;
-    }
-    public void sendInlineSentyment (long chatId, CallbackQuery callbackQuery){
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
-
-        inlineKeyboardButton1.setText("Vai al link");
-        inlineKeyboardButton1.setUrl("https://my.swaggyapp.com/login");
-        List<InlineKeyboardButton> rowList = new ArrayList<>();
-
-        rowList.add(inlineKeyboardButton1);
-        inlineKeyboardMarkup.setKeyboard(Collections.singletonList(rowList));
-
-        SendMessage message = new SendMessage();
-        message.setText("Non sai quando acquistare o vendere BTC? Abbiamo noi la soluzione adatta per te, il nostro servizio 'SENTIMENT'!\n \n" +
-                "Accedi a 'Swaggy App' con le tue credenziali e troverai ciò di cui hai bisogno!");
-
-        message.setChatId(String.valueOf(chatId));
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        listIdMessage.add(callbackQuery.getMessage().getMessageId());
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-    private void sendMessage_update (Long chatId, String text, Update update){
-
-        SendMessage message = new SendMessage();
-        message.setChatId(String.valueOf(chatId));
-        message.setText(text);
-
-        listIdMessage.add(update.getMessage().getMessageId());
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-    private void sendMessage_callbackQuery (Long chatId, String text, CallbackQuery callbackQuery){
-
-        SendMessage message = new SendMessage();
-        message.setChatId(String.valueOf(chatId));
-        message.setText(text);
-
-        listIdMessage.add(callbackQuery.getMessage().getMessageId());
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
     private int sendLastMessage (Long chatId, String text, Update update){
 
         SendMessage message = new SendMessage();
