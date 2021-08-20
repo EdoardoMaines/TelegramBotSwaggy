@@ -5,15 +5,15 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 
 import java.util.List;
 
-public class SendMessageCallbackHandler extends SendMessageHandler {
+public class SendMessageCallbackHandler extends SendMessageUpdateHandler {
 
 
-    public SendMessageCallbackHandler(long chatId, List<Integer> listMessage) {
-        super(chatId, listMessage);
+    public SendMessageCallbackHandler(long chatId, List<Integer> listIdMessage) {
+        super(chatId, listIdMessage);
     }
 
     public SendMessage forwardMessage(String text, CallbackQuery callbackQuery) {
-        listMessage.add(callbackQuery.getMessage().getMessageId());
+        listIdMessage.add(callbackQuery.getMessage().getMessageId());
         return super.forwardMessage(text);
     }
 }

@@ -1,13 +1,16 @@
 package core;
 
+import config.BotConfig;
 import entities.*;
 import handler.commandHandler.CommandHandler;
 import handler.deleteMessageHandler.DeleteAllMessagesHandler;
 import handler.deleteMessageHandler.DeleteLastMessageHandler;
 import handler.inlineHandler.*;
+import handler.messageHandler.SendLastMessageHandler;
 import handler.messageHandler.SendMessageCallbackHandler;
 import handler.messageHandler.SendMessageUpdateHandler;
 import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
@@ -38,6 +41,13 @@ import static constants.UrlConstant.*;
 
 @NoArgsConstructor
 public class TelegramBot extends TelegramLongPollingBot {
+
+    @Value("${bot: userName: SwaggyBot}")
+    public String botUserName;
+
+    @Value("${bot: token: 1907533091:AAFVMX4jJTCHvON6n9x5rgH6AKuPWPg3AVU}")
+    public String botToken;
+
 
     public WebClient userWebClient = WebClient.create(User_ModuleBaseURL);
     public WebClient rentWebClient = WebClient.create(Machine_ModuleBaseURL);
@@ -113,11 +123,16 @@ public class TelegramBot extends TelegramLongPollingBot {
     @Override
     public String getBotUsername() {
         return "myBot";
+        //return new BotConfig().botUserName;
+        //BotConfig botConfig = new BotConfig();
+        //return botUserName;
     }
 
     @Override
     public String getBotToken() {
         return "1942630650:AAEaQJiEhArTLGCwi7AEkzJqoBsyVGXltjk";
+        //BotConfig botConfig = new BotConfig();
+        //return botToken;
     }
 
     @Override
@@ -183,12 +198,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                             }
                         }
                     } catch (WebClientResponseException e) {
-                        e.printStackTrace();
-                        try {
-                            execute(sendMessageUpdateHandler.forwardMessage("L'email che hai inserito non è corretta!", update));
-                        } catch (TelegramApiException telegramApiException) {
-                            telegramApiException.printStackTrace();
-                        }
+                        //e.printStackTrace();
+                        sendMessage_update(chatId, "L'email che hai inserito non è corretta!", update);
+//                        try {
+//                            execute(sendMessageUpdateHandler.forwardMessage("L'email che hai inserito non è corretta!", update));
+//                        } catch (TelegramApiException  telegramApiException) {
+//                            telegramApiException.printStackTrace();
+//                        }
                     }
                 }
                 if (checkCommands(update.getMessage().getText()) && !checkInput(update.getMessage().getText())) {
@@ -201,11 +217,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
                 if (update.getMessage().getText().equals("/stop")){
                     //listIdMessage.add(update.getMessage().getMessageId());
-
                     userWebClient.delete();
                     rentWebClient.delete();
 
-                    DeleteAllMessagesHandler deleteAllMessagesHandler = new DeleteAllMessagesHandler(chatId, update.getMessage().getMessageId(), listIdMessage, listIdPhoto);
+                    DeleteAllMessagesHandler deleteAllMessagesHandler = new DeleteAllMessagesHandler(chatId, update.getMessage().getMessageId(), sendMessageUpdateHandler.getListIdMessage(), listIdPhoto);
                     for (DeleteMessage message : deleteAllMessagesHandler.deleteAllChat()) {
                         try {
                             execute(message);
@@ -213,16 +228,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                             e.printStackTrace();
                         }
                     }
-                    //deleteAllChat(update);
-                    try {
-                        execute(sendMessageUpdateHandler.forwardMessage("Ciao, alla prossima!", update));
-                    } catch (TelegramApiException e) {
-                        e.printStackTrace();
-                    }
+                    SendLastMessageHandler sendLastMessageHandler = new SendLastMessageHandler(chatId);
+
                     //sendLastMessage(chatId,"Ciao, alla prossima!", update);
                     //deleteLastMessage(2000);
                     DeleteLastMessageHandler deleteLastMessageHandler = new DeleteLastMessageHandler(chatId, update.getMessage().getMessageId(), listIdMessage, listIdPhoto);
                     try {
+                        execute(sendLastMessageHandler.forwardLastMessage("Ciao, alla prossima!"));
                         execute(deleteLastMessageHandler.deleteLastMessage(2000));
                     } catch (TelegramApiException e) {
                         e.printStackTrace();
@@ -261,47 +273,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 //        answer.setCacheTime(1);
 //        execute(answer);
 //    }
-    private int sendLastMessage (Long chatId, String text, Update update){
-
-        SendMessage message = new SendMessage();
-        message.setChatId(String.valueOf(chatId));
-        message.setText(text);
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-        return update.getMessage().getMessageId();
-    }
-    private void deleteAllChat(Update update) {
-        idStopCommand = update.getMessage().getMessageId();
-
-        for(int i=idStopCommand; i>=idStopCommand - (listIdMessage.size()+listIdPhoto.size()); i--) {
-            DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), i);
-
-            try {
-                execute(deleteMessage);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        }
-        listIdMessage.clear();
-        listIdPhoto.clear();
-    }
-    private void deleteLastMessage(int delay) {
-        DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), idStopCommand+1);
-        try {
-            Thread.sleep(delay);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        try {
-            execute(deleteMessage);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
     private void sendPhoto_update(Long chatId, String pathPhoto, String captionPhoto, Update update) throws TelegramApiValidationException {
 
         SendPhoto sendMessage = new SendPhoto();
@@ -405,5 +376,20 @@ public class TelegramBot extends TelegramLongPollingBot {
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
+    }
+
+    private void sendMessage_update (Long chatId, String text, Update update){
+
+        SendMessage message = new SendMessage();
+        message.setChatId(String.valueOf(chatId));
+        message.setText(text);
+
+        listIdMessage.add(update.getMessage().getMessageId());
+
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
     }
 }
