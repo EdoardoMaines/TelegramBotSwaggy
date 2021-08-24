@@ -1,18 +1,17 @@
-package handler.commandHandler;
+package handlers.commandHandler;
 
 import entities.Account;
 import entities.Currency;
 import entities.Rent;
 import entities.Wallet;
-import handler.inlineHandler.*;
-import handler.messageHandler.SendMessageCallbackHandler;
-import handler.messageHandler.SendMessageUpdateHandler;
+import handlers.inlineHandler.*;
+import handlers.messageHandler.SendMessageCallbackHandler;
+import handlers.messageHandler.SendPhotoCallbackHandler;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiValidationException;
 import restClients.AccountRestClient;
 import restClients.CurrencyRestClient;
 import restClients.WalletRestClient;
@@ -26,10 +25,14 @@ import static core.TelegramBot.indirizzoWallet_SWAGGY;
 public class CommandHandler {
     String command;
     List<Integer> listIdMessage;
+    List<Integer> listIdPhoto;
+    List<Rent> listRent;
 
-    public CommandHandler(String command, List<Integer> listIdMessage) {
+    public CommandHandler(String command, List<Integer> listIdMessage, List<Integer> listIdPhoto, List<Rent> listRent) {
         this.command = command;
         this.listIdMessage = listIdMessage;
+        this.listIdPhoto = listIdPhoto;
+        this.listRent = listRent;
     }
 
     public String getCommand() {
@@ -40,7 +43,7 @@ public class CommandHandler {
         this.command = command;
     }
 
-    public List<SendMessage> executeCommand(CallbackQuery callbackQuery, List<Rent> listRent, String userId) {
+    public ArrayList executeCommand(CallbackQuery callbackQuery, String userId) {
 
         long chatId = callbackQuery.getMessage().getChatId();
         String user = callbackQuery.getFrom().getUserName();
@@ -53,7 +56,9 @@ public class CommandHandler {
         AccountRestClient accountRestClient = new AccountRestClient(accountWebClient);
         WalletRestClient walletRestClient = new WalletRestClient(walletWebClient);
 
-        List<SendMessage> listMessage = new ArrayList<>();
+
+        ArrayList listMessage = new ArrayList<>();
+
         SendMessageCallbackHandler sendMessageCallbackHandler = new SendMessageCallbackHandler(chatId, listIdMessage);
 
         switch (command) {
@@ -63,27 +68,35 @@ public class CommandHandler {
                 listMessage.add(message1);
                 return listMessage;
             case "Macchine Noleggiate":
-                if(!listRent.isEmpty()) {
-                    for (Rent r : listRent) {
-                        SendMessage message2 = sendMessageCallbackHandler.forwardMessage("Queste sono le tue macchine noleggiate!", callbackQuery);
-                        SendMessage message3 = sendMessageCallbackHandler.forwardMessage(r.toString(), callbackQuery);
-                        listMessage.add(message2);
-                        listMessage.add(message3);
-                        return listMessage;
-                    }
-                } else {
-                    SendMessage message4 = sendMessageCallbackHandler.forwardMessage("Non hai macchine noleggiate!", callbackQuery);
-                    listMessage.add(message4);
-                    return listMessage;
-                }
+//                if(!listRent.isEmpty()) {
+//                    SendMessage message2 = sendMessageCallbackHandler.forwardMessage("Queste sono le tue macchine noleggiate!", callbackQuery);
+//                    listMessage.add(message2);
+//                    for (Rent r : listRent) {
+//                        SendMessage message3 = sendMessageCallbackHandler.forwardMessage(r.toString(), callbackQuery);
+//                        listMessage.add(message3);
+//                    }
+//                } else {
+//                    SendMessage message4 = sendMessageCallbackHandler.forwardMessage("Non hai macchine noleggiate!", callbackQuery);
+//                    listMessage.add(message4);
+//                }
+//                return listMessage;
+                InlineRentHandler inlineRentHandler = new InlineRentHandler(chatId, user, listIdMessage, listRent);
+                List<SendMessage> list = inlineRentHandler.sendInlineRent(callbackQuery);
+                listMessage.addAll(list);
+                return listMessage;
             case "Swaggy":
+                SendPhotoCallbackHandler sendPhotoCallbackHandler1 = new SendPhotoCallbackHandler(chatId, listIdPhoto);
+                SendPhoto photo1 = sendPhotoCallbackHandler1.forwardPhoto("src/main/imgs/swaggy.JPG", "", callbackQuery);
                 //sendPhoto_callbackQuery(chatId, "src/main/imgs/swaggy.JPG", "", update.getCallbackQuery());
                 InlineSwaggyHandler inlineSwaggyHandler = new InlineSwaggyHandler(chatId, user, listIdMessage);
                 SendMessage message5 = inlineSwaggyHandler.sendInlineSwaggy(callbackQuery);
+                listMessage.add(photo1);
                 listMessage.add(message5);
                 return listMessage;
             case "Indirizzo Wallet":
-                SendMessage message6 = sendMessageCallbackHandler.forwardMessage("Questo è il tuo indirizzo wallet: '" + indirizzoWallet_SWAGGY + "'", callbackQuery);
+                //SendMessage message6 = sendMessageCallbackHandler.forwardMessage("Questo è il tuo indirizzo wallet: '" + indirizzoWallet_SWAGGY + "'", callbackQuery);
+                InlineAddressWalletHandler inlineAddressWalletHandler = new InlineAddressWalletHandler(chatId, user, listIdMessage);
+                SendMessage message6 = inlineAddressWalletHandler.sendInlineAddress(callbackQuery);
                 listMessage.add(message6);
                 return listMessage;
             case "Saldi Wallet":
@@ -101,12 +114,15 @@ public class CommandHandler {
 //                sentyment_STATUS = sentyment.getStatus();
 //                if(sentyment_STATUS.equals("NEGATIVO")) {
                 //sendPhoto_callbackQuery(chatId, "src/main/imgs/sentyment.png", "", update.getCallbackQuery());
+                SendPhotoCallbackHandler sendPhotoCallbackHandler2 = new SendPhotoCallbackHandler(chatId, listIdPhoto);
+                SendPhoto photo2 = sendPhotoCallbackHandler2.forwardPhoto("src/main/imgs/sentyment.png", "", callbackQuery);
                 InlineSentymentHandler inlineSentymentHandler = new InlineSentymentHandler(chatId, user, listIdMessage);
                 //sendInlineSentyment(chatId, update.getCallbackQuery());
                 SendMessage message9 = inlineSentymentHandler.sendInlineSentyment(callbackQuery);
 //                } else {
 //                    sendMessage_callbackQuery(chatId, "Il servizio Sentyment è ATTIVO", update.getCallbackQuery());
 //                }
+                listMessage.add(photo2);
                 listMessage.add(message9);
                 return listMessage;
             case "EUR":
@@ -208,6 +224,22 @@ public class CommandHandler {
                     SendMessage message28 = sendMessageCallbackHandler.forwardMessage("Non hai un wallet BETCHA!", callbackQuery);
                     listMessage.add(message28);
                 }
+                return listMessage;
+            case "Back1Lv":
+                InlineHandler inlineHandler = new InlineHandler(chatId, user, listIdMessage);
+                SendMessage message29 = inlineHandler.sendBackInline(callbackQuery);
+                SendPhotoCallbackHandler sendPhotoCallbackHandler3 = new SendPhotoCallbackHandler(chatId, listIdPhoto);
+                SendPhoto photo3 = sendPhotoCallbackHandler3.forwardPhoto("src/main/imgs/swag.jpg", "", callbackQuery);
+                listMessage.add(photo3);
+                listMessage.add(message29);
+                return listMessage;
+            case "Back2Lv":
+                InlineSwaggyHandler inlineSwaggyHandler1 = new InlineSwaggyHandler(chatId, user, listIdMessage);
+                SendMessage message30 = inlineSwaggyHandler1.sendInlineSwaggy(callbackQuery);
+                SendPhotoCallbackHandler sendPhotoCallbackHandler4 = new SendPhotoCallbackHandler(chatId, listIdPhoto);
+                SendPhoto photo4 = sendPhotoCallbackHandler4.forwardPhoto("src/main/imgs/swaggy.JPG", "", callbackQuery);
+                listMessage.add(photo4);
+                listMessage.add(message30);
                 return listMessage;
         }
         return null;

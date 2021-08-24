@@ -1,6 +1,5 @@
-package handler.messageHandler;
+package handlers.messageHandler;
 
-import handler.messageHandler.SendMessageHandler;
 import lombok.Getter;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;

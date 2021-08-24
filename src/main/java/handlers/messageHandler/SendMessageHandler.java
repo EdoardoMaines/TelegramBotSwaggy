@@ -1,9 +1,6 @@
-package handler.messageHandler;
+package handlers.messageHandler;
 
-import lombok.Getter;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-
-import java.util.List;
 
 public class SendMessageHandler {
     long chatId;

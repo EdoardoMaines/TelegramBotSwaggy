@@ -1,16 +1,14 @@
 package core;
 
-import config.BotConfig;
 import entities.*;
-import handler.commandHandler.CommandHandler;
-import handler.deleteMessageHandler.DeleteAllMessagesHandler;
-import handler.deleteMessageHandler.DeleteLastMessageHandler;
-import handler.inlineHandler.*;
-import handler.messageHandler.SendLastMessageHandler;
-import handler.messageHandler.SendMessageCallbackHandler;
-import handler.messageHandler.SendMessageUpdateHandler;
+import handlers.commandHandler.CommandHandler;
+import handlers.deleteMessageHandler.DeleteAllMessagesHandler;
+import handlers.deleteMessageHandler.DeleteLastMessageHandler;
+import handlers.inlineHandler.*;
+import handlers.messageHandler.SendLastMessageHandler;
+import handlers.messageHandler.SendMessageUpdateHandler;
+import handlers.messageHandler.SendPhotoUpdateHandler;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
@@ -18,8 +16,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.*;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiValidationException;
 import entities.User;
@@ -32,7 +28,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,12 +36,6 @@ import static constants.UrlConstant.*;
 
 @NoArgsConstructor
 public class TelegramBot extends TelegramLongPollingBot {
-
-    @Value("${bot: userName: SwaggyBot}")
-    public String botUserName;
-
-    @Value("${bot: token: 1907533091:AAFVMX4jJTCHvON6n9x5rgH6AKuPWPg3AVU}")
-    public String botToken;
 
 
     public WebClient userWebClient = WebClient.create(User_ModuleBaseURL);
@@ -122,27 +111,30 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return "myBot";
-        //return new BotConfig().botUserName;
-        //BotConfig botConfig = new BotConfig();
+        return "SwaggyBot";
+//        BotConfig botConfig = new BotConfig();
+//        return botConfig.getBotUserName();
         //return botUserName;
     }
 
     @Override
     public String getBotToken() {
-        return "1942630650:AAEaQJiEhArTLGCwi7AEkzJqoBsyVGXltjk";
-        //BotConfig botConfig = new BotConfig();
-        //return botToken;
+        //my bot - 1942630650:AAEaQJiEhArTLGCwi7AEkzJqoBsyVGXltjk (mio)
+        //SwaggyBot - 1907533091:AAFVMX4jJTCHvON6n9x5rgH6AKuPWPg3AVU (seba)
+        //SwaggyBot - 1901387562:AAGC5a8NWpnZdjZoGIGkzmURWOSFtxQ1M84 (mio-@SwagYourLifeBot)
+        return "1901387562:AAGC5a8NWpnZdjZoGIGkzmURWOSFtxQ1M84";
+//        BotConfig botConfig = new BotConfig();
+//        return botConfig.getBotToken();
     }
 
     @Override
     public void onUpdateReceived(Update update) {
-
         if (update.hasMessage()) {
             if (update.getMessage().hasText()) {
                 user = update.getMessage().getFrom().getUserName();
                 chatId = update.getMessage().getChatId();
                 SendMessageUpdateHandler sendMessageUpdateHandler = new SendMessageUpdateHandler(chatId, listIdMessage);
+                SendPhotoUpdateHandler sendPhotoUpdateHandler = new SendPhotoUpdateHandler(update.getMessage().getChatId(), listIdPhoto);
 
                 if (update.getMessage().getText().equals("/start")){
                     listIdMessage.add(update.getMessage().getMessageId());
@@ -154,8 +146,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 //                    JSONObject jsonObject = userRestClient.retriveAtheByJson();
 //                    System.out.print(jsonObject);
                     try {
-                        sendPhoto_update(update.getMessage().getChatId(), "src/main/imgs/swag.jpg", "", update);
-                    } catch (TelegramApiValidationException e) {
+                        //sendPhoto_update(update.getMessage().getChatId(), "src/main/imgs/swag.jpg", "", update);
+                        execute(sendPhotoUpdateHandler.forwardPhoto( "src/main/imgs/swag.jpg", "", update));
+                    } catch (TelegramApiException e) {
                         e.printStackTrace();
                     }
                     try {
@@ -220,7 +213,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     userWebClient.delete();
                     rentWebClient.delete();
 
-                    DeleteAllMessagesHandler deleteAllMessagesHandler = new DeleteAllMessagesHandler(chatId, update.getMessage().getMessageId(), sendMessageUpdateHandler.getListIdMessage(), listIdPhoto);
+                    DeleteAllMessagesHandler deleteAllMessagesHandler = new DeleteAllMessagesHandler(chatId, update.getMessage().getMessageId(), sendMessageUpdateHandler.getListIdMessage(), sendPhotoUpdateHandler.getListIdPhoto());
                     for (DeleteMessage message : deleteAllMessagesHandler.deleteAllChat()) {
                         try {
                             execute(message);
@@ -244,10 +237,15 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         if (update.hasCallbackQuery()) {
             if (update.getCallbackQuery().getData() != null) {
-                CommandHandler commandHandler = new CommandHandler(update.getCallbackQuery().getData(),listIdMessage);
-                for(SendMessage message : commandHandler.executeCommand(update.getCallbackQuery(), listRent, userId)) {
+                CommandHandler commandHandler = new CommandHandler(update.getCallbackQuery().getData(),listIdMessage, listIdPhoto, listRent);
+                for(Object message : commandHandler.executeCommand(update.getCallbackQuery(), userId)) {
                     try {
-                        execute(message);
+                        if (message instanceof SendMessage) {
+                            execute((SendMessage) message);
+                        }
+                        else {
+                            execute((SendPhoto) message);
+                        }
                     } catch (TelegramApiException e) {
                         e.printStackTrace();
                     }

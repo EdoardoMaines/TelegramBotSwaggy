@@ -1,20 +1,18 @@
-package handler.inlineHandler;
+package handlers.inlineHandler;
 
-import handler.messageHandler.SendMessageCallbackHandler;
-import handler.messageHandler.SendMessageUpdateHandler;
+import handlers.messageHandler.SendMessageCallbackHandler;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class InlineAccountHandler extends InlineHandler {
 
-    public InlineAccountHandler(long chatId, String user, List<Integer> listMessage) {
-        super(chatId, user, listMessage);
+    public InlineAccountHandler(long chatId, String user, List<Integer> listIdMessage) {
+        super(chatId, user, listIdMessage);
     }
 
     public SendMessage sendInlineAccount (CallbackQuery callbackQuery) {
@@ -26,6 +24,7 @@ public class InlineAccountHandler extends InlineHandler {
         InlineKeyboardButton inlineKeyboardButton4 = new InlineKeyboardButton();
         InlineKeyboardButton inlineKeyboardButton5 = new InlineKeyboardButton();
         InlineKeyboardButton inlineKeyboardButton6 = new InlineKeyboardButton();
+        InlineKeyboardButton inlineKeyboardButton7 = new InlineKeyboardButton();
 
         inlineKeyboardButton1.setText("OMNIBUS");
         inlineKeyboardButton1.setCallbackData("OMNIBUS");
@@ -33,6 +32,7 @@ public class InlineAccountHandler extends InlineHandler {
         inlineKeyboardButton2.setCallbackData("STANDARD");
         inlineKeyboardButton3.setText("SAVING");
         inlineKeyboardButton3.setCallbackData("SAVING");
+
         inlineKeyboardButton4.setText("SWAGGY_CARD");
         inlineKeyboardButton4.setCallbackData("SWAGGY_CARD");
         inlineKeyboardButton5.setText("EMONEY_CARD");
@@ -40,17 +40,30 @@ public class InlineAccountHandler extends InlineHandler {
         inlineKeyboardButton6.setText("EMONEY_CARD_VIP");
         inlineKeyboardButton6.setCallbackData("EMONEY_CARD_VIP");
 
-        List<InlineKeyboardButton> rowList = new ArrayList<>();
-        rowList.add(inlineKeyboardButton1);
-        rowList.add(inlineKeyboardButton2);
-        rowList.add(inlineKeyboardButton3);
-        rowList.add(inlineKeyboardButton4);
-        rowList.add(inlineKeyboardButton5);
-        rowList.add(inlineKeyboardButton6);
+        inlineKeyboardButton7.setText("<-- Back");
+        inlineKeyboardButton7.setCallbackData("Back2Lv");
 
-        inlineKeyboardMarkup.setKeyboard(Collections.singletonList(rowList));
+        List<InlineKeyboardButton> rowList1 = new ArrayList<>();
+        List<InlineKeyboardButton> rowList2 = new ArrayList<>();
+        List<InlineKeyboardButton> rowList3 = new ArrayList<>();
 
-        SendMessageCallbackHandler sendMessageCallbackHandler = new SendMessageCallbackHandler(chatId, listMessage);
+        List<List<InlineKeyboardButton>> list = new ArrayList<>();
+
+        rowList1.add(inlineKeyboardButton1);
+        rowList1.add(inlineKeyboardButton2);
+        rowList1.add(inlineKeyboardButton3);
+        rowList2.add(inlineKeyboardButton4);
+        rowList2.add(inlineKeyboardButton5);
+        rowList2.add(inlineKeyboardButton6);
+        rowList3.add(inlineKeyboardButton7);
+
+        list.add(rowList1);
+        list.add(rowList2);
+        list.add(rowList3);
+
+        inlineKeyboardMarkup.setKeyboard(list);
+
+        SendMessageCallbackHandler sendMessageCallbackHandler = new SendMessageCallbackHandler(chatId, listIdMessage);
         SendMessage message = sendMessageCallbackHandler.forwardMessage("Ciao " + user + "! Seleziona cosa di cui hai bisogno.", callbackQuery);
 
 //        SendMessage message = new SendMessage();

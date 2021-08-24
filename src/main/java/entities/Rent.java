@@ -18,6 +18,8 @@ public class Rent {
     String machineName;
     String miningStartDate;
     String miningEndDate;
+    int hashRate;
+    int rentDays;
     double fraction;
     BigDecimal production;
 
@@ -27,6 +29,8 @@ public class Rent {
                 "MiningStartDate: '" + miningStartDate + "\n" +
                 "MiningEndDate: '" + miningEndDate + "\n" +
                 "Fraction: " + fraction + "\n" +
+                "hashRate: '" + hashRate + "\n" +
+                "rentDays: '" + rentDays/365 + "\n" +
                 "Production: " + production.divide(DIVISION_FACTOR) + "BTC";
     }
 }

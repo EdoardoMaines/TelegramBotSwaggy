@@ -1,6 +1,6 @@
-package handler.inlineHandler;
+package handlers.inlineHandler;
 
-import handler.messageHandler.SendMessageCallbackHandler;
+import handlers.messageHandler.SendMessageCallbackHandler;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -13,8 +13,8 @@ import java.util.List;
 public class InlineWalletHandler extends InlineHandler{
 
 
-    public InlineWalletHandler(long chatId, String user, List<Integer> listMessage) {
-        super(chatId, user, listMessage);
+    public InlineWalletHandler(long chatId, String user, List<Integer> listIdMessage) {
+        super(chatId, user, listIdMessage);
     }
 
     public SendMessage sendInlineWallet (CallbackQuery callbackQuery) {
@@ -23,6 +23,7 @@ public class InlineWalletHandler extends InlineHandler{
         InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
         InlineKeyboardButton inlineKeyboardButton2 = new InlineKeyboardButton();
         InlineKeyboardButton inlineKeyboardButton3 = new InlineKeyboardButton();
+        InlineKeyboardButton inlineKeyboardButton4 = new InlineKeyboardButton();
 
         inlineKeyboardButton1.setText("SWAGGY");
         inlineKeyboardButton1.setCallbackData("SWAGGY_WALLET");
@@ -30,16 +31,24 @@ public class InlineWalletHandler extends InlineHandler{
         inlineKeyboardButton2.setCallbackData("SWAGGY_SAVING");
         inlineKeyboardButton3.setText("BETCHA");
         inlineKeyboardButton3.setCallbackData("BETCHA");
+        inlineKeyboardButton4.setText("<-- Back");
+        inlineKeyboardButton4.setCallbackData("Back2Lv");
 
 
-        List<InlineKeyboardButton> rowList = new ArrayList<>();
-        rowList.add(inlineKeyboardButton1);
-        rowList.add(inlineKeyboardButton2);
-        rowList.add(inlineKeyboardButton3);
+        List<InlineKeyboardButton> rowList1 = new ArrayList<>();
+        List<InlineKeyboardButton> rowList2 = new ArrayList<>();
+        rowList1.add(inlineKeyboardButton1);
+        rowList1.add(inlineKeyboardButton2);
+        rowList1.add(inlineKeyboardButton3);
+        rowList2.add(inlineKeyboardButton4);
 
-        inlineKeyboardMarkup.setKeyboard(Collections.singletonList(rowList));
+        List<List<InlineKeyboardButton>> list = new ArrayList<>();
+        list.add(rowList1);
+        list.add(rowList2);
 
-        SendMessageCallbackHandler sendMessageCallbackHandler = new SendMessageCallbackHandler(chatId, listMessage);
+        inlineKeyboardMarkup.setKeyboard(list);
+
+        SendMessageCallbackHandler sendMessageCallbackHandler = new SendMessageCallbackHandler(chatId, listIdMessage);
         SendMessage message = sendMessageCallbackHandler.forwardMessage("Ciao " + user + "! Seleziona cosa di cui hai bisogno.", callbackQuery);
 
 //        SendMessage message = new SendMessage();

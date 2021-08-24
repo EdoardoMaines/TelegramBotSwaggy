@@ -1,7 +1,6 @@
-package handler.deleteMessageHandler;
+package handlers.deleteMessageHandler;
 
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
 

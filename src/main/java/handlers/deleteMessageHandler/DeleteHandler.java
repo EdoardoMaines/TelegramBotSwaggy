@@ -1,4 +1,4 @@
-package handler.deleteMessageHandler;
+package handlers.deleteMessageHandler;
 
 import java.util.List;
 
