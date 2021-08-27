@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static core.TelegramBot.indirizzoWallet_SWAGGY;
-
 public class InlineRentHandler extends InlineHandler{
 
     List<Rent> listRent;
@@ -50,7 +48,7 @@ public class InlineRentHandler extends InlineHandler{
             listMessage.add(message2);
 
         } else {
-            SendMessage message4 = sendMessageCallbackHandler.forwardMessage("Non hai macchine noleggiate!", callbackQuery);
+            SendMessage message4 = sendMessageCallbackHandler.forwardMessage("Ops, non hai macchine noleggiate!", callbackQuery);
             message4.setReplyMarkup(inlineKeyboardMarkup);
             listMessage.add(message4);
         }

@@ -7,7 +7,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class InlineSentymentHandler extends  InlineHandler{
@@ -42,20 +41,8 @@ public class InlineSentymentHandler extends  InlineHandler{
         SendMessage message = sendMessageCallbackHandler.forwardMessage("Non sai quando acquistare o vendere BTC? Abbiamo noi la soluzione adatta per te, il nostro servizio 'SENTIMENT'!\n \n" +
                 "Accedi a 'Swaggy App' con le tue credenziali e troverai ciò di cui hai bisogno!", callbackQuery);
 
-//        SendMessage message = new SendMessage();
-//        message.setText("Non sai quando acquistare o vendere BTC? Abbiamo noi la soluzione adatta per te, il nostro servizio 'SENTIMENT'!\n \n" +
-//                "Accedi a 'Swaggy App' con le tue credenziali e troverai ciò di cui hai bisogno!");
-//
-//        message.setChatId(String.valueOf(chatId));
         message.setReplyMarkup(inlineKeyboardMarkup);
 
-//        listIdMessage.add(callbackQuery.getMessage().getMessageId());
-//
-//        try {
-//            execute(message);
-//        } catch (TelegramApiException e) {
-//            e.printStackTrace();
-//        }
         return message;
     }
 }

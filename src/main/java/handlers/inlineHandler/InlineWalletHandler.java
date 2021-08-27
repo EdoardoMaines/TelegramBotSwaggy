@@ -7,7 +7,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class InlineWalletHandler extends InlineHandler{
@@ -49,14 +48,9 @@ public class InlineWalletHandler extends InlineHandler{
         inlineKeyboardMarkup.setKeyboard(list);
 
         SendMessageCallbackHandler sendMessageCallbackHandler = new SendMessageCallbackHandler(chatId, listIdMessage);
-        SendMessage message = sendMessageCallbackHandler.forwardMessage("Ciao " + user + "! Seleziona cosa di cui hai bisogno.", callbackQuery);
+        SendMessage message = sendMessageCallbackHandler.forwardMessage("Ciao " + user + "! Ecco a te i wallet disponibili.", callbackQuery);
 
-//        SendMessage message = new SendMessage();
-//        message.setText("Ciao " + user + "! Seleziona cosa di cui hai bisogno.");
-//        message.setChatId(String.valueOf(chatId));
         message.setReplyMarkup(inlineKeyboardMarkup);
-
-        //li.add(callbackQuery.getMessage().getMessageId());
 
         return message;
     }

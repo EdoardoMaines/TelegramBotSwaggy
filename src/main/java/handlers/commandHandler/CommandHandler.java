@@ -68,18 +68,6 @@ public class CommandHandler {
                 listMessage.add(message1);
                 return listMessage;
             case "Macchine Noleggiate":
-//                if(!listRent.isEmpty()) {
-//                    SendMessage message2 = sendMessageCallbackHandler.forwardMessage("Queste sono le tue macchine noleggiate!", callbackQuery);
-//                    listMessage.add(message2);
-//                    for (Rent r : listRent) {
-//                        SendMessage message3 = sendMessageCallbackHandler.forwardMessage(r.toString(), callbackQuery);
-//                        listMessage.add(message3);
-//                    }
-//                } else {
-//                    SendMessage message4 = sendMessageCallbackHandler.forwardMessage("Non hai macchine noleggiate!", callbackQuery);
-//                    listMessage.add(message4);
-//                }
-//                return listMessage;
                 InlineRentHandler inlineRentHandler = new InlineRentHandler(chatId, user, listIdMessage, listRent);
                 List<SendMessage> list = inlineRentHandler.sendInlineRent(callbackQuery);
                 listMessage.addAll(list);
@@ -87,14 +75,12 @@ public class CommandHandler {
             case "Swaggy":
                 SendPhotoCallbackHandler sendPhotoCallbackHandler1 = new SendPhotoCallbackHandler(chatId, listIdPhoto);
                 SendPhoto photo1 = sendPhotoCallbackHandler1.forwardPhoto("src/main/imgs/swaggy.JPG", "", callbackQuery);
-                //sendPhoto_callbackQuery(chatId, "src/main/imgs/swaggy.JPG", "", update.getCallbackQuery());
                 InlineSwaggyHandler inlineSwaggyHandler = new InlineSwaggyHandler(chatId, user, listIdMessage);
                 SendMessage message5 = inlineSwaggyHandler.sendInlineSwaggy(callbackQuery);
                 listMessage.add(photo1);
                 listMessage.add(message5);
                 return listMessage;
             case "Indirizzo Wallet":
-                //SendMessage message6 = sendMessageCallbackHandler.forwardMessage("Questo è il tuo indirizzo wallet: '" + indirizzoWallet_SWAGGY + "'", callbackQuery);
                 InlineAddressWalletHandler inlineAddressWalletHandler = new InlineAddressWalletHandler(chatId, user, listIdMessage);
                 SendMessage message6 = inlineAddressWalletHandler.sendInlineAddress(callbackQuery);
                 listMessage.add(message6);
@@ -110,18 +96,10 @@ public class CommandHandler {
                 listMessage.add(message8);
                 return listMessage;
             case "Sentyment":
-//                Sentyment sentyment = sentymentRestClient.retriveSentymentById(userId);
-//                sentyment_STATUS = sentyment.getStatus();
-//                if(sentyment_STATUS.equals("NEGATIVO")) {
-                //sendPhoto_callbackQuery(chatId, "src/main/imgs/sentyment.png", "", update.getCallbackQuery());
                 SendPhotoCallbackHandler sendPhotoCallbackHandler2 = new SendPhotoCallbackHandler(chatId, listIdPhoto);
                 SendPhoto photo2 = sendPhotoCallbackHandler2.forwardPhoto("src/main/imgs/sentyment.png", "", callbackQuery);
                 InlineSentymentHandler inlineSentymentHandler = new InlineSentymentHandler(chatId, user, listIdMessage);
-                //sendInlineSentyment(chatId, update.getCallbackQuery());
                 SendMessage message9 = inlineSentymentHandler.sendInlineSentyment(callbackQuery);
-//                } else {
-//                    sendMessage_callbackQuery(chatId, "Il servizio Sentyment è ATTIVO", update.getCallbackQuery());
-//                }
                 listMessage.add(photo2);
                 listMessage.add(message9);
                 return listMessage;

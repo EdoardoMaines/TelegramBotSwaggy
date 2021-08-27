@@ -7,7 +7,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class InlineSwaggyHandler extends InlineHandler{
@@ -37,27 +36,26 @@ public class InlineSwaggyHandler extends InlineHandler{
 
         List<InlineKeyboardButton> rowList1 = new ArrayList<>();
         List<InlineKeyboardButton> rowList2 = new ArrayList<>();
+        List<InlineKeyboardButton> rowList3 = new ArrayList<>();
         rowList1.add(inlineKeyboardButton1);
         rowList1.add(inlineKeyboardButton2);
-        rowList1.add(inlineKeyboardButton3);
-        rowList1.add(inlineKeyboardButton4);
-        rowList2.add(inlineKeyboardButton5);
+
+        rowList2.add(inlineKeyboardButton3);
+        rowList2.add(inlineKeyboardButton4);
+
+        rowList3.add(inlineKeyboardButton5);
 
         List<List<InlineKeyboardButton>> list = new ArrayList<>();
         list.add(rowList1);
         list.add(rowList2);
+        list.add(rowList3);
 
         inlineKeyboardMarkup.setKeyboard(list);
 
         SendMessageCallbackHandler sendMessageCallbackHandler = new SendMessageCallbackHandler(chatId, listIdMessage);
-        SendMessage message = sendMessageCallbackHandler.forwardMessage("Tramite questi bottoni protrai visualizzare le informazioni riguardanti:", callbackQuery);
+        SendMessage message = sendMessageCallbackHandler.forwardMessage("Ciao @" + user + "! Di cosa hai bisogno?", callbackQuery);
 
-//        SendMessage message = new SendMessage();
-//        message.setText("Tramite questi bottoni protrai visualizzare le informazioni riguardanti:");
-//        message.setChatId(String.valueOf(chatId));
         message.setReplyMarkup(inlineKeyboardMarkup);
-
-        //listIdMessage.add(callbackQuery.getMessage().getMessageId());
 
         return message;
     }

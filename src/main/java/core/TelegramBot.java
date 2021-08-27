@@ -40,17 +40,11 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     public WebClient userWebClient = WebClient.create(User_ModuleBaseURL);
     public WebClient rentWebClient = WebClient.create(Machine_ModuleBaseURL);
-    public WebClient currencyWebClient = WebClient.create(Currency_ModuleBaseURL);
-    public WebClient sentymentWebClient = WebClient.create(Sentyment_ModuleBaseURL);
-    public WebClient accountWebClient = WebClient.create(Account_ModuleBaseURL);
     public WebClient walletWebClient = WebClient.create(Wallet_ModuleBaseURL);
 
 
     public UserRestClient userRestClient = new UserRestClient(userWebClient);
     public RentRestClient rentRestClient = new RentRestClient(rentWebClient);
-    public CurrencyRestClient currencyRestClient = new CurrencyRestClient(currencyWebClient);
-    public SentymentRestClient sentymentRestClient = new SentymentRestClient(sentymentWebClient);
-    public AccountRestClient accountRestClient = new AccountRestClient(accountWebClient);
     public WalletRestClient walletRestClient = new WalletRestClient(walletWebClient);
 
 
@@ -61,13 +55,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 
 
     public long chatId;
-    public int idStopCommand;
     public static String user;
     public static String userId;
     public static String email;
     public static String password;
-    public static String passwordCritto;
-    public static String sentyment_STATUS;
     public static String indirizzoWallet_SWAGGY;
 
 
@@ -101,32 +92,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         return false;
     }
-
-
-    @Override
-    public void onClosing() {
-        exe.shutdown();
-    }
-    
-
     @Override
     public String getBotUsername() {
         return "SwaggyBot";
-//        BotConfig botConfig = new BotConfig();
-//        return botConfig.getBotUserName();
-        //return botUserName;
     }
-
     @Override
     public String getBotToken() {
-        //my bot - 1942630650:AAEaQJiEhArTLGCwi7AEkzJqoBsyVGXltjk (mio)
-        //SwaggyBot - 1907533091:AAFVMX4jJTCHvON6n9x5rgH6AKuPWPg3AVU (seba)
-        //SwaggyBot - 1901387562:AAGC5a8NWpnZdjZoGIGkzmURWOSFtxQ1M84 (mio-@SwagYourLifeBot)
         return "1901387562:AAGC5a8NWpnZdjZoGIGkzmURWOSFtxQ1M84";
-//        BotConfig botConfig = new BotConfig();
-//        return botConfig.getBotToken();
     }
-
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage()) {
@@ -138,24 +111,16 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 if (update.getMessage().getText().equals("/start")){
                     listIdMessage.add(update.getMessage().getMessageId());
-                    //access();
-                    //List<JSONObject> jsonObject = userRestClient.retriveAtheByJson();
-//                    for (JSONObject j : jsonObject) {
-//                        System.out.print(j.toString());
-//                    }
-//                    JSONObject jsonObject = userRestClient.retriveAtheByJson();
-//                    System.out.print(jsonObject);
                     try {
-                        //sendPhoto_update(update.getMessage().getChatId(), "src/main/imgs/swag.jpg", "", update);
                         execute(sendPhotoUpdateHandler.forwardPhoto( "src/main/imgs/swag.jpg", "", update));
                     } catch (TelegramApiException e) {
                         e.printStackTrace();
                     }
                     try {
-                        execute(sendMessageUpdateHandler.forwardMessage("Ciao " + user + "!\n" +
-                                "Per accedere ai tuoi dati abbiamo bisogno della tua email e della tua password di Swaggy." + "\n" +
-                                "Invia un messaggio contenente SOLO la tua email e la tua password separate da '/'" + "\n" +
-                                "Esempio:", update));
+                        execute(sendMessageUpdateHandler.forwardMessage("Ciao @" + user + ", Benvenuto! Io sono 'SwaggyBot'.\n\n" +
+                                "Ho bisogno della tua email e della tua password di Swaggy." + "\n" +
+                                "Inviami un messaggio contenente SOLO la tua email e la tua password separate da '/'" + "\n\n" +
+                                "Ti faccio vedere un esempio di come devi fare:", update));
                         execute(sendMessageUpdateHandler.forwardMessage("'email'/'password'", update));
                     } catch (TelegramApiException e) {
                         e.printStackTrace();
@@ -177,7 +142,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                         if (checkCommands(update.getMessage().getText()) && checkPassword(password, user)) {
                             try {
-                                System.out.print(passwordCritto);
                                 InlineHandler inlineHandler = new InlineHandler(chatId, user.toString(), listIdMessage);
                                 execute(inlineHandler.sendInline(update));
                             } catch (TelegramApiException e) {
@@ -185,31 +149,29 @@ public class TelegramBot extends TelegramLongPollingBot {
                             }
                         } else {
                             try {
-                                execute(sendMessageUpdateHandler.forwardMessage("Ops! La password che hai inserito è scorretta.", update));
+                                execute(sendMessageUpdateHandler.forwardMessage("Ops! La password che hai inserito non è corretta.", update));
                             } catch (TelegramApiException e) {
                                 e.printStackTrace();
                             }
                         }
                     } catch (WebClientResponseException e) {
-                        //e.printStackTrace();
-                        sendMessage_update(chatId, "L'email che hai inserito non è corretta!", update);
-//                        try {
-//                            execute(sendMessageUpdateHandler.forwardMessage("L'email che hai inserito non è corretta!", update));
-//                        } catch (TelegramApiException  telegramApiException) {
-//                            telegramApiException.printStackTrace();
-//                        }
+                        try {
+                            execute(sendMessageUpdateHandler.forwardMessage("L'email che hai inserito non è corretta!", update));
+                        } catch (TelegramApiException telegramApiException) {
+                            telegramApiException.printStackTrace();
+                        }
+
                     }
                 }
                 if (checkCommands(update.getMessage().getText()) && !checkInput(update.getMessage().getText())) {
                     listIdMessage.add(update.getMessage().getMessageId());
                     try {
-                        execute(sendMessageUpdateHandler.forwardMessage("Ops! Il messaggio che hai inviato o la password non sono corretti", update));
+                        execute(sendMessageUpdateHandler.forwardMessage("Ops! Il messaggio che hai inviato non è nella forma corretta", update));
                     } catch (TelegramApiException e) {
                         e.printStackTrace();
                     }
                 }
                 if (update.getMessage().getText().equals("/stop")){
-                    //listIdMessage.add(update.getMessage().getMessageId());
                     userWebClient.delete();
                     rentWebClient.delete();
 
@@ -223,8 +185,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
                     SendLastMessageHandler sendLastMessageHandler = new SendLastMessageHandler(chatId);
 
-                    //sendLastMessage(chatId,"Ciao, alla prossima!", update);
-                    //deleteLastMessage(2000);
                     DeleteLastMessageHandler deleteLastMessageHandler = new DeleteLastMessageHandler(chatId, update.getMessage().getMessageId(), listIdMessage, listIdPhoto);
                     try {
                         execute(sendLastMessageHandler.forwardLastMessage("Ciao, alla prossima!"));
@@ -260,134 +220,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 System.out.println(update.getMyChatMember().getChat().getId());
                 System.out.println("NESSUN MESSAGGIO!");
             }
-        }
-    }
-//    public void answerCallback(CallbackQuery callBack) throws TelegramApiException {
-//        CallbackQuery callbackQuery = callBack;
-//        String callbackQueryId = callbackQuery != null ? callbackQuery.getId() : "invalid_query_id";
-//        AnswerCallbackQuery answer = new AnswerCallbackQuery(callbackQueryId);
-//        answer.setText("Caricamento...");
-//        answer.setShowAlert(false);
-//        answer.setCacheTime(1);
-//        execute(answer);
-//    }
-    private void sendPhoto_update(Long chatId, String pathPhoto, String captionPhoto, Update update) throws TelegramApiValidationException {
-
-        SendPhoto sendMessage = new SendPhoto();
-        sendMessage.setCaption(captionPhoto);
-        sendMessage.setPhoto(new InputFile(new File(pathPhoto)));
-        sendMessage.setChatId(String.valueOf(chatId));
-        sendMessage.validate();
-
-        listIdPhoto.add(update.getMessage().getMessageId());
-
-        try {
-            execute(sendMessage);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-    private void sendPhoto_callbackQuery(Long chatId, String pathPhoto, String captionPhoto, CallbackQuery callbackQuery) throws TelegramApiValidationException {
-
-        SendPhoto sendMessage = new SendPhoto();
-        sendMessage.setCaption(captionPhoto);
-        sendMessage.setPhoto(new InputFile(new File(pathPhoto)));
-        sendMessage.setChatId(String.valueOf(chatId));
-        sendMessage.validate();
-
-        listIdPhoto.add(callbackQuery.getMessage().getMessageId());
-
-        try {
-            execute(sendMessage);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-    private void sendGif (Long chatId, String pathGif, String captionGif, CallbackQuery callbackQuery) throws TelegramApiValidationException {
-
-        SendAnimation sendAnimation = new SendAnimation();
-        sendAnimation.setCaption(captionGif);
-        sendAnimation.setAnimation(new InputFile(new File(pathGif)));
-        sendAnimation.setChatId(String.valueOf(chatId));
-        sendAnimation.validate();
-
-        listIdPhoto.add(callbackQuery.getMessage().getMessageId());
-
-        try {
-            execute(sendAnimation);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-    private void access() {
-        try {
-            URL url = new URL("https://api.swaggyapp.com/user/v1/user/public-login");
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod("POST");
-            con.setConnectTimeout(5000);
-            con.setReadTimeout(5000);
-            int status = con.getResponseCode();
-            System.out.println(status);
-            con.setRequestProperty("Content-Type", "application/json");
-            con.setDoOutput(true);
-            con.setDoInput(true);
-            con.getInputStream();
-            con.getOutputStream();
-            String jsonInputString = "{\"username\": \"mainesedoardo@gmail.com\",\n" +
-                    "  \"password\": \"Tirocinio99Swag!\",\n" +
-                    "  \"skipOtpCheck\": true}";
-
-//            try (OutputStream os = con.getOutputStream()) {
-//                byte[] input = jsonInputString.getBytes("utf-8");
-//                os.write(input, 0, input.length);
-//            }
-//
-//            try (BufferedReader br = new BufferedReader(
-//                    new InputStreamReader(con.getInputStream(), "utf-8"))) {
-//                StringBuilder response = new StringBuilder();
-//                String responseLine = null;
-//                while ((responseLine = br.readLine()) != null) {
-//                    response.append(responseLine.trim());
-//                }
-//                System.out.println(response);
-//            }
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-//        String command = "curl -X 'POST'" +
-//                "  'http://localhost:8444/public/login'" +
-//                "  -H 'accept: */*'" +
-//                "  -H 'Content-Type: application/json'" +
-//                "  -d '{" +
-//                "  \"username\": \"mainesedoardo@gmail.com\"," +
-//                "  \"password\": \"Tirocinio99Swag!\"," +
-//                "  \"skipOtpCheck\": true" +
-//                "}'";
-//        try {
-//            Process process = Runtime.getRuntime().exec(command);
-//            process.getInputStream();
-//
-//            System.out.print(process.);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-    }
-
-    private void sendMessage_update (Long chatId, String text, Update update){
-
-        SendMessage message = new SendMessage();
-        message.setChatId(String.valueOf(chatId));
-        message.setText(text);
-
-        listIdMessage.add(update.getMessage().getMessageId());
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
         }
     }
 }

@@ -46,12 +46,7 @@ public class InlineBTCHandler extends InlineHandler{
         SendMessageCallbackHandler sendMessageCallbackHandler = new SendMessageCallbackHandler(chatId, listIdMessage);
         SendMessage message = sendMessageCallbackHandler.forwardMessage("Valore in tempo reale del BTC nelle seguenti valute:", callbackQuery);
 
-//        SendMessage message = new SendMessage();
-//        message.setText("Valore in tempo reale del BTC nelle seguenti valute:");
-//        message.setChatId(String.valueOf(chatId));
         message.setReplyMarkup(inlineKeyboardMarkup);
-
-        //listIdMessage.add(callbackQuery.getMessage().getMessageId());
 
         return message;
     }

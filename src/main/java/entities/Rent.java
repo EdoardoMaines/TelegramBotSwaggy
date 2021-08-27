@@ -25,12 +25,12 @@ public class Rent {
 
     @Override
     public String toString() {
-        return "MachineName: '" + machineName + "\n" +
-                "MiningStartDate: '" + miningStartDate + "\n" +
-                "MiningEndDate: '" + miningEndDate + "\n" +
+        return "MachineName: " + machineName + "\n" +
+                "MiningStartDate: " + miningStartDate + "\n" +
+                "MiningEndDate: " + miningEndDate + "\n" +
                 "Fraction: " + fraction + "\n" +
-                "hashRate: '" + hashRate + "\n" +
-                "rentDays: '" + rentDays/365 + "\n" +
-                "Production: " + production.divide(DIVISION_FACTOR) + "BTC";
+                "hashRate: " + hashRate + "\n" +
+                "rentDays: " + rentDays/365 + " years" + "\n" +
+                "Production: " + production.divide(DIVISION_FACTOR) + " BTC";
     }
 }
